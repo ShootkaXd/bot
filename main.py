@@ -1,20 +1,12 @@
-# import requests
 from settings import settings
 from GoogleNews import GoogleNews
 import discord
 from discord.ext import commands
-# from discord_slash import SlashCommand, SlashContext
-# import json
 
 
 bot_baraholka = commands.Bot(command_prefix=settings['prefix'])
-
 prefix = settings['prefix']
-
-# slash = SlashCommand(bot_baraholka, sync_commands = True)
-
 bot_baraholka.remove_command('help')
-
 googlenews = GoogleNews(lang='ru')
 
 
@@ -65,29 +57,6 @@ async def __help(ctx):
     print(f'[Logs:info] Справка по командам была успешно выведена | {bot_baraholka}help ')
 
 
-# @slash.slash(name='search', description='Показывает вам новости по интересующей вас теме')
-# async def _search(ctx: SlashContext, *, search):
-#     topic = str(search)
-#     googlenews = GoogleNews(period='2d')
-#     googlenews.search(search)
-#     # googlenews.get_page(2)
-#     googlenews.page_at(2)
-#
-#     texts = googlenews.get_texts()
-#     urls = googlenews.get_links()
-#     img = googlenews.get_texts()
-#     news_em = discord.Embed(
-#         title = f'Новости о {topic}',
-#         color = discord.Color.red(),
-#     )
-#     news_em.set_thumbnail(url=bot_baraholka.user.avatar_url)
-#
-#     for j in range(10, len(img)):
-#         news_em.add_field(name=str(img[j]), value=f'[Кликне чтоб посмотреть подробней]({str(urls[j])}) \n --------- \n',
-#                           inline=False)
-#     await ctx.send(embed=news_em)
-
-
 @bot_baraholka.command()
 async def search(ctx, *, search):
     topic = str(search)
@@ -115,25 +84,6 @@ async def search(ctx, *, search):
 async def search(ctx, error):
     if isinstance(error, commands.MissingRequiredArgument):
         await ctx.send(f'{ctx.author.name}, Укажите аргумент!')
-
-
-# @slash.slash(name='news', description='Главные новости')
-# @bot_baraholka.command()
-# async def news(ctx, *, search=''):
-#     count = 10
-#     search = search.split()
-#     if (search):
-#         query = search[0]
-#     if (len(search) > 1):
-#         count = search[1]
-#     googlenews = json.loads(requests.get(f'https://newsapi.org/v2/everything?{"q="+query if search else "domains=news.google.com,lenta.ru,rbc.ru,russian.rt.com"}&language=ru&pageSize={count if int(count) < 15 else 15}&page=1&from=2022-05-07&sortBy=publishedAt&apiKey={settings["NEWS_API_KEY"]}').text)
-#     googlenews = googlenews['articles']
-#     news_em = discord.Embed(title=f'Главные события', color=discord.Color.red())
-#     news_em.set_thumbnail(url=bot_baraholka.user.avatar_url)
-#
-#     for article in googlenews:
-#         news_em.add_field(name=article['title'], value=f"{article['description']} [Смотреть]({article['url']})", inline=False)
-#     await ctx.send(embed=news_em)
 
 
 ''' Административные команды '''
