@@ -6,40 +6,41 @@ import sqlite3
 from settings import settings
 from GoogleNews import GoogleNews
 from discord.ext import commands
-
+from discord_components import DiscordComponents, ComponentsBot, Button, ButtonStyle
 
 bot_baraholka = commands.Bot(command_prefix=settings['prefix'])
 prefix = settings['prefix']
 bot_baraholka.remove_command('help')
 googlenews = GoogleNews(lang='ru')
-conn = sqlite3.connect("Discord.db")
-cursor = conn.cursor()
+# conn = sqlite3.connect("Discord.db")
+# cursor = conn.cursor()
 
 
 @bot_baraholka.event
 async def on_ready():
     print(f"Logged on as {settings['bot']}")
+    DiscordComponents(bot_baraholka)
     await bot_baraholka.change_presence(status=discord.Status.online, activity=discord.Game('-Help'))
-    cursor.execute("""CREATE TABLE "users"(
-        "name" TEXT,
-        "id" INT,
-        "cash" INT,
-        "rep_rank" TEXT,
-        "lvl" INT
-    )""")
-    conn.commit()
-    for guild in bot_baraholka.guilds:
-        for member in guild.members:
-            if cursor.execute(f"SELECT id FROM users WHERE id = {member.id}").fetchone():
-                cursor.execute(f"INSERT INTO users VALUES ('{member}', {member.id}, 0, 0, 0)")
-                conn.commit()
-            else:
-                pass
+    # cursor.execute("""CREATE TABLE "users"(
+    #     "name" TEXT,
+    #     "id" INT,
+    #     "cash" INT,
+    #     "rep_rank" TEXT,
+    #     "lvl" INT
+    # )""")
+    # conn.commit()
+    # for guild in bot_baraholka.guilds:
+    #     for member in guild.members:
+    #         if cursor.execute(f"SELECT id FROM users WHERE id = {member.id}").fetchone():
+    #             cursor.execute(f"INSERT INTO users VALUES ('{member}', {member.id}, 0, 0, 0)")
+    #             conn.commit()
+    #         else:
+    #             pass
 
 
-@bot_baraholka.event
-async def on_command_error():
-    pass
+# @bot_baraholka.event
+# async def on_command_error():
+#     pass
 
 
 @bot_baraholka.command()
@@ -59,15 +60,16 @@ async def __help(ctx):
 
     embed.add_field(name='Информация',
                     value=f'`{prefix}help` '
+                          f'`{prefix}menu` '
                           f'`{prefix}search` '
-                          f'`{prefix}news` ',
+                          f'`{prefix}news`  ',
                     inline=False)
 
     embed.add_field(name='Модерирование',
-                    value=f'`{prefix}мут` '
+                    value=f'`{prefix}mute` '
+                          f'`{prefix}unmute` '
                           f'`{prefix}ban` '
-                          f'`{prefix}kick` '
-                          f'`{prefix}cmd` ',
+                          f'`{prefix}kick` ',
                     inline=False)
     embed.set_thumbnail(url=bot_baraholka.user.avatar_url)
 
@@ -127,6 +129,35 @@ async def news(ctx, *, rummage=''):
                           inline=False)
     await ctx.send(embed=news_em)
 
+
+@bot_baraholka.command()
+async def menu(ctx):
+    await ctx.send(
+        embed=discord.Embed(title="Меню взаимодействия"),
+        components=[
+            Button(style=ButtonStyle.green, label="Новости", emoji="📰"),
+            Button(style=ButtonStyle.URL, label="GitHub", emoji="🗃", url="https://github.com/ShootkaXd/bot.git")
+        ]
+    )
+    interaction = await bot_baraholka.wait_for("button_click")
+    if interaction.channel == ctx.channel:
+        if interaction.component.label == "Новости":
+            count = 10
+            rummage = ''
+            if rummage:
+                query = rummage[0]
+            if len(rummage) > 1:
+                count = rummage[1]
+            item = json.loads(requests.get(
+                f'https://newsapi.org/v2/everything?{"q=" + query if rummage else "domains=news.google.com,lenta.ru,rbc.ru,russian.rt.com"}&language=ru&pageSize={count if int(count) < 15 else 15}&page=1&from=2022-05-18&sortBy=publishedAt&apiKey={settings["NEWS_API_KEY"]}').text)
+            item = item['articles']
+            news_em = discord.Embed(title=f'Главные события', color=discord.Color.red())
+            news_em.set_thumbnail(url=bot_baraholka.user.avatar_url)
+
+            for article in item:
+                news_em.add_field(name=article['title'], value=f"{article['description']} [Смотреть]({article['url']})",
+                                  inline=False)
+            await ctx.send(embed=news_em)
 
 ''' Административные команды '''
 
