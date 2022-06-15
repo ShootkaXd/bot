@@ -7,40 +7,70 @@ from settings import settings
 from GoogleNews import GoogleNews
 from discord.ext import commands
 from discord_components import DiscordComponents, ComponentsBot, Button, ButtonStyle
+from tabulate import tabulate
+from random import random
 
 bot_baraholka = commands.Bot(command_prefix=settings['prefix'])
 prefix = settings['prefix']
 bot_baraholka.remove_command('help')
 googlenews = GoogleNews(lang='ru')
-# conn = sqlite3.connect("Discord.db")
-# cursor = conn.cursor()
+conn = sqlite3.connect("Discord_database.db")
+cursor = conn.cursor()
+
+# cursor.execute("""CREATE TABLE IF NOT EXISTS users(
+#     name TEXT,
+#     id INT,
+#     money INT,
+#     rep INT,
+#     lvl INT
+# )""")
+# conn.commit()
+
+cursor.execute("""CREATE TABLE IF NOT EXISTS shop(
+    id INT,
+    type TEXT,
+    name TEXT, 
+    cost INT
+)""")
+conn.commit()
 
 
 @bot_baraholka.event
 async def on_ready():
+    cursor.execute("""CREATE TABLE IF NOT EXISTS users(
+        name TEXT,
+        id INT,
+        money INT,
+        rep INT, 
+        lvl INT
+    )""")
     print(f"Logged on as {settings['bot']}")
     DiscordComponents(bot_baraholka)
     await bot_baraholka.change_presence(status=discord.Status.online, activity=discord.Game('-Help'))
-    # cursor.execute("""CREATE TABLE "users"(
-    #     "name" TEXT,
-    #     "id" INT,
-    #     "cash" INT,
-    #     "rep_rank" TEXT,
-    #     "lvl" INT
-    # )""")
-    # conn.commit()
-    # for guild in bot_baraholka.guilds:
-    #     for member in guild.members:
-    #         if cursor.execute(f"SELECT id FROM users WHERE id = {member.id}").fetchone():
-    #             cursor.execute(f"INSERT INTO users VALUES ('{member}', {member.id}, 0, 0, 0)")
-    #             conn.commit()
-    #         else:
-    #             pass
+    for guild in bot_baraholka.guilds:
+        for member in guild.members:
+            if cursor.execute(f"SELECT id FROM users WHERE id = {member.id}").fetchone() is None:
+                cursor.execute(f"INSERT INTO users VALUES ('{member}', {member.id}, 0, 0, 1)")
+            else:
+                pass
+    conn.commit()
 
 
-# @bot_baraholka.event
-# async def on_command_error():
-#     pass
+@bot_baraholka.event
+async def on_member_join(member):
+    if cursor.execute(f"SELECT id FROM users WHERE id = {member.id}").fetchone() is None:
+        cursor.execute(f"INSERT INTO users VALUES ('{member}', {member.id}, 0, 0, 1)")
+        conn.commit()
+    else:
+        pass
+
+
+@bot_baraholka.command(aliases=['balance', 'cash'])
+async def __balance(ctx, member: discord.Member = None):
+    if member is None:
+        await ctx.send(embed=discord.Embed(discription=f"""Баланс пользователя **{ctx.author}** составляет **{cursor.execute("SELECT money FROM users WHERE id = {}".format(ctx.author.id)).fetchone()[0]} :leaves:**"""))
+    else:
+        await ctx.send(embed=discord.Embed(discription=f"""Баланс пользователя **{member}** составляет **{cursor.execute("SELECT money FROM users WHERE id = {}".format(member.id)).fetchone()[0]}:leaves:**"""))
 
 
 @bot_baraholka.command()
@@ -158,6 +188,7 @@ async def menu(ctx):
                 news_em.add_field(name=article['title'], value=f"{article['description']} [Смотреть]({article['url']})",
                                   inline=False)
             await ctx.send(embed=news_em)
+
 
 ''' Административные команды '''
 
