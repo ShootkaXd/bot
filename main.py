@@ -10,24 +10,18 @@ from discord_components import DiscordComponents, ComponentsBot, Button, ButtonS
 from tabulate import tabulate
 from random import random
 
-bot_baraholka = commands.Bot(command_prefix=settings['prefix'])
+intents = discord.Intents.default()
+intents.members = True
+
+bot_baraholka = commands.Bot(command_prefix=settings['prefix'], intents=intents)
 prefix = settings['prefix']
 bot_baraholka.remove_command('help')
 googlenews = GoogleNews(lang='ru')
 conn = sqlite3.connect("Discord_database.db")
 cursor = conn.cursor()
 
-# cursor.execute("""CREATE TABLE IF NOT EXISTS users(
-#     name TEXT,
-#     id INT,
-#     money INT,
-#     rep INT,
-#     lvl INT
-# )""")
-# conn.commit()
-
 cursor.execute("""CREATE TABLE IF NOT EXISTS shop(
-    id INT,
+    id INT PRIMARY KEY,
     type TEXT,
     name TEXT, 
     cost INT
@@ -36,10 +30,14 @@ conn.commit()
 
 
 @bot_baraholka.event
+async def on_command_error(ctx, error):
+    await ctx.message.add_reaction("❌")
+
+
+@bot_baraholka.event
 async def on_ready():
     cursor.execute("""CREATE TABLE IF NOT EXISTS users(
-        name TEXT,
-        id INT,
+        id INT PRIMARY KEY,
         money INT,
         rep INT, 
         lvl INT
@@ -50,7 +48,7 @@ async def on_ready():
     for guild in bot_baraholka.guilds:
         for member in guild.members:
             if cursor.execute(f"SELECT id FROM users WHERE id = {member.id}").fetchone() is None:
-                cursor.execute(f"INSERT INTO users VALUES ('{member}', {member.id}, 0, 0, 1)")
+                cursor.execute(f"INSERT INTO users VALUES ({member.id}, 0, 0, 1)")
             else:
                 pass
     conn.commit()
@@ -59,7 +57,7 @@ async def on_ready():
 @bot_baraholka.event
 async def on_member_join(member):
     if cursor.execute(f"SELECT id FROM users WHERE id = {member.id}").fetchone() is None:
-        cursor.execute(f"INSERT INTO users VALUES ('{member}', {member.id}, 0, 0, 1)")
+        cursor.execute(f"INSERT INTO users VALUES ({member.id}, 0, 0, 1)")
         conn.commit()
     else:
         pass
@@ -68,9 +66,11 @@ async def on_member_join(member):
 @bot_baraholka.command(aliases=['balance', 'cash'])
 async def __balance(ctx, member: discord.Member = None):
     if member is None:
-        await ctx.send(embed=discord.Embed(discription=f"""Баланс пользователя **{ctx.author}** составляет **{cursor.execute("SELECT money FROM users WHERE id = {}".format(ctx.author.id)).fetchone()[0]} :leaves:**"""))
+        await ctx.send(embed=discord.Embed(
+            description=f"""Баланс пользователя {ctx.author.mention} составляет {cursor.execute("SELECT money FROM users WHERE id = {}".format(ctx.author.id)).fetchone()[0]} :newspaper:"""))
     else:
-        await ctx.send(embed=discord.Embed(discription=f"""Баланс пользователя **{member}** составляет **{cursor.execute("SELECT money FROM users WHERE id = {}".format(member.id)).fetchone()[0]}:leaves:**"""))
+        await ctx.send(embed=discord.Embed(
+            description=f"""Баланс пользователя {member} составляет {cursor.execute("SELECT money FROM users WHERE id = {}".format(member.id)).fetchone()[0]} :newspaper:"""))
 
 
 @bot_baraholka.command()
@@ -193,6 +193,23 @@ async def menu(ctx):
 ''' Административные команды '''
 
 
+@bot_baraholka.command(aliases=['pay'])
+@commands.has_permissions(administrator=True)
+async def __pay(ctx, member: discord.Member = None, amount: int = None):
+    if member is None:
+        await ctx.send(f"**{ctx.author}**, укажите пользователя, которому желаете выдать определенную сумму")
+    else:
+        if amount is None:
+            await ctx.send(f"**{ctx.author}**, укажите пользователя, которому желаете выдать определенную сумму")
+        elif amount < 1:
+            await ctx.send(f"**{ctx.author}**, укажите сумму больше 1")
+        else:
+            cursor.execute("UPDATE users SET money = money + {} WHERE id = {}".format(amount, member.id))
+            conn.commit()
+
+            await ctx.message.add_reaction('✅')
+
+
 @bot_baraholka.command(aliases=['kick', 'кик', 'Кик', 'Kick'])
 @commands.has_permissions(administrator=True)
 async def __kick(ctx, member: discord.Member, *, reason=None):
@@ -263,9 +280,10 @@ async def __cmd(ctx):
         title='Команды',
         colour=discord.Color.dark_gold()
     )
-    cmd_em.add_field(name='News Command', value='```-news [Показывает вам новости по интересующей вас теме]``` '
-                                                '```-search [Видео на интересующие новости]```'
-                                                '```-help, -cmd, -kick -ban```')
+    cmd_em.add_field(name='Admin', value='```-news [Показывает вам новости по интересующей вас теме]``` '
+                                         '```-search [Видео на интересующие новости]```'
+                                         '```-pay @ [Выдать деньги пользователю]```'
+                                         '```-help, -cmd, -kick -ban```')
     await ctx.send(embed=cmd_em)
 
 
