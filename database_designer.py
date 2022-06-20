@@ -12,6 +12,8 @@ def initialize_database():
         rep INT, 
         level INT
     )""")
+    
+    conn.commit()
 
     cursor.execute("""CREATE TABLE IF NOT EXISTS items(
         id INT PRIMARY KEY,
@@ -20,6 +22,8 @@ def initialize_database():
         FOREIGN KEY (user_id) REFERENCES users(id) ON UPDATE CASCADE ON DELETE CASCADE
     )""")
 
+    conn.commit()
+
     cursor.execute("""CREATE TABLE IF NOT EXISTS shop_items(
         item_id INT PRIMARY KEY,
         user_id INT NOT NULL,
@@ -27,5 +31,7 @@ def initialize_database():
         FOREIGN KEY (items) REFERENCES items(id) ON UPDATE CASCADE ON DELETE CASCADE
         FOREIGN KEY (users) REFERENCES users(id) ON UPDATE CASCADE ON DELETE CASCADE
     )""")
+
+    conn.commit()
 
     conn.close()
