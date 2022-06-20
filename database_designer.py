@@ -1,6 +1,7 @@
 import sqlite3
+from settings import settings
 
-conn = sqlite3.connect("db.db")
+conn = sqlite3.connect(settings['db_file'])
 cursor = conn.cursor()
 
 
