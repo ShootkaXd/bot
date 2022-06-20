@@ -28,8 +28,8 @@ def initialize_database():
         item_id INT PRIMARY KEY,
         user_id INT NOT NULL,
         cost INT,
-        FOREIGN KEY (items) REFERENCES items(id) ON UPDATE CASCADE ON DELETE CASCADE
-        FOREIGN KEY (users) REFERENCES users(id) ON UPDATE CASCADE ON DELETE CASCADE
+        FOREIGN KEY (item_id) REFERENCES items(id) ON UPDATE CASCADE ON DELETE CASCADE
+        FOREIGN KEY (user_id) REFERENCES users(id) ON UPDATE CASCADE ON DELETE CASCADE
     )""")
 
     conn.commit()
