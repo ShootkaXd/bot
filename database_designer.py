@@ -7,7 +7,7 @@ cursor = conn.cursor()
 
 def initialize_database():
     cursor.execute("""CREATE TABLE IF NOT EXISTS users(
-        id INT PRIMARY KEY,
+        id INT PRIMARY KEY NOT NULL,
         money INT,
         rep INT, 
         level INT
@@ -16,7 +16,7 @@ def initialize_database():
     conn.commit()
 
     cursor.execute("""CREATE TABLE IF NOT EXISTS items(
-        id INT PRIMARY KEY,
+        id INT PRIMARY KEY AUTOINCREMENT,
         user_id INT NOT NULL,
         name TEXT,
         FOREIGN KEY (user_id) REFERENCES users(id) ON UPDATE CASCADE ON DELETE CASCADE
@@ -25,10 +25,10 @@ def initialize_database():
     conn.commit()
 
     cursor.execute("""CREATE TABLE IF NOT EXISTS shop_items(
-        item_id INT PRIMARY KEY,
+        id INT PRIMARY KEY NOT NULL,
         user_id INT NOT NULL,
         cost INT,
-        FOREIGN KEY (item_id) REFERENCES items(id) ON UPDATE CASCADE ON DELETE CASCADE,
+        FOREIGN KEY (id) REFERENCES items(id) ON UPDATE CASCADE ON DELETE CASCADE,
         FOREIGN KEY (user_id) REFERENCES users(id) ON UPDATE CASCADE ON DELETE CASCADE
     )""")
 
