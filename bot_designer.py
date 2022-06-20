@@ -11,50 +11,50 @@ intents.members = True
 
 prefix = settings['prefix']
 
-bot_clear = commands.Bot(command_prefix=prefix, intents=intents)
 
-bot_clear.remove_command('help')
+def create_bot_clean():
+    bot = commands.Bot(command_prefix=prefix, intents=intents)
 
+    bot.remove_command('help')
 
-@bot_clear.event
-async def on_command_error(ctx, error):
-    await ctx.message.add_reaction("❌")
+    @bot.event
+    async def on_command_error(ctx, error):
+        await ctx.message.add_reaction("❌")
 
+    @bot.event
+    async def on_member_join(member):
+        if get_user(member.id) is None:
+            add_user(member.id)
 
-@bot_clear.event
-async def on_member_join(member):
-    if get_user(member.id) is None:
-        add_user(member.id)
-
-
-@bot_clear.event
-async def on_ready():
-    print(f"Logged on as {settings['bot_name']}")
-    DiscordComponents(bot_clear)
-    await bot_clear.change_presence(
-        status=discord.Status.online,
-        activity=discord.Activity(
-            type=discord.ActivityType.watching,
-            name='-Help'
+    @bot.event
+    async def on_ready():
+        print(f"Logged on as {settings['bot_name']}")
+        DiscordComponents(bot)
+        await bot.change_presence(
+            status=discord.Status.online,
+            activity=discord.Activity(
+                type=discord.ActivityType.watching,
+                name='-Help'
+            )
         )
-    )
-    for guild in bot_clear.guilds:
-        for member in guild.members:
-            if get_user(member.id) is None:
-                add_user(member.id)
-    conn.commit()
+        for guild in bot.guilds:
+            for member in guild.members:
+                if get_user(member.id) is None:
+                    add_user(member.id)
+        conn.commit()
 
+    @bot.event
+    async def on_message(message: discord.Message):
+        if (message.author.id == bot.user.id):
+            return
 
-@bot_clear.event
-async def on_message(message: discord.Message):
-    if (message.author.id == bot_clear.user.id):
-        return
+        old_level = get_user_level(message.author.id)
 
-    old_level = get_user_level(message.author.id)
+        add_user_experience(message.author.id, 1)
 
-    add_user_experience(message.author.id, 1)
+        new_level = get_user_level(message.author.id)
 
-    new_level = get_user_level(message.author.id)
+        if (new_level > old_level):
+            await message.reply("Поздравляю с новым уровнем!")
 
-    if (new_level > old_level):
-        await message.reply("Поздравляю с новым уровнем!")
+    return bot
