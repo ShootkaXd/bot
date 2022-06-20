@@ -49,7 +49,7 @@ def add_user(id):
 @action
 def add_user_experience(id, amount):
     user = get_user(id)
-    sql(f"UPDATE users SET lvl={user['level'] + amount} WHERE id = {id}")
+    sql(f"UPDATE users SET level={user['level'] + amount} WHERE id = {id}")
 
 
 @action
