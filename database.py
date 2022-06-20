@@ -23,11 +23,11 @@ def action(func):
 def data(item_names: List[str], is_list=False):
     def decorator(func):
         def parse(*args, **kwargs) -> dict | List[dict]:
+            result = func(*args, **kwargs)
             if not is_list:
-                return dict(zip(item_names, func()))
-            items = func()
+                return dict(zip(item_names, result))
             parsed_items = []
-            for item in items:
+            for item in result:
                 parsed_items.append(dict(zip(item_names, item)))
             return parsed_items
         return parse
