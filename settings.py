@@ -2,7 +2,7 @@ import json
 
 try:
     with open("config.json") as file:
-        settings = json.load(file.read())
+        settings = json.load(file)
 except FileNotFoundError:
     print("Configuration file not found")
     settings = {}
