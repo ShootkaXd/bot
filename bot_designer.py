@@ -47,7 +47,7 @@ async def on_ready():
 
 @bot_clear.event
 async def on_message(message: discord.Message):
-    if (message.author.id == bot_clear.id):
+    if (message.author.id == bot_clear.user.id):
         return
 
     old_level = get_user_level(message.author.id)
