@@ -3,7 +3,7 @@ import json
 try:
     with open("config.json") as file:
         settings = json.load(file.read())
-except:
+except FileNotFoundError:
     print("Configuration file not found")
     settings = {}
     print("What is your future db file name?")
@@ -19,5 +19,5 @@ except:
     print("What is your Google News api key?")
     settings['NEWS_API_KEY'] = input()
     with open("config.json", "w+") as file:
-        file.write(json.dump(settings))
+        json.dump(settings, file)
     
