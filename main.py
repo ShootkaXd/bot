@@ -17,7 +17,7 @@ bot_baraholka = commands.Bot(command_prefix=settings['prefix'], intents=intents)
 prefix = settings['prefix']
 bot_baraholka.remove_command('help')
 googlenews = GoogleNews(lang='ru')
-conn = sqlite3.connect("Discord_database.db")
+conn = sqlite3.connect("db.db")
 cursor = conn.cursor()
 
 cursor.execute("""CREATE TABLE IF NOT EXISTS shop(
