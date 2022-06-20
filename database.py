@@ -2,12 +2,13 @@ import sqlite3
 import os
 from typing import Optional
 
-from . import database_designer as db_designer
+from settings import settings
+import database_designer as db_designer
 
-if (not os.path.exists('db.db')):
+if (not os.path.exists(settings['db_file'])):
     db_designer.initialize_database()
 
-connection = sqlite3.connect("db.db")
+connection = sqlite3.connect(settings['db_file'])
 cursor = connection.cursor()
 sql = cursor.execute
 

@@ -1,6 +1,3 @@
-import os
-
-from . import database_designer
 from bot_commands import bot
 from settings import settings
 
