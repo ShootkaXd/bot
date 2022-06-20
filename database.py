@@ -5,8 +5,7 @@ from typing import Optional
 from settings import settings
 import database_designer as db_designer
 
-if (not os.path.exists(settings['db_file'])):
-    db_designer.initialize_database()
+db_designer.initialize_database()
 
 connection = sqlite3.connect(settings['db_file'])
 cursor = connection.cursor()
