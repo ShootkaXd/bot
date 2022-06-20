@@ -1,0 +1,8 @@
+{
+  "db_file": "db.db",
+  "token": "",
+  "bot_name": "Bot",
+  "id": 0,
+  "prefix": "-",
+  "NEWS_API_KEY": "BAD_NEWS_API_KEY"
+}
