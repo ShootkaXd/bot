@@ -11,6 +11,8 @@ connection = sqlite3.connect(settings['db_file'])
 cursor = connection.cursor()
 sql = cursor.execute
 
+level_trashhold = int(settings['messages_per_level'])
+
 
 def action(func):
     def act(*args, no_action=False, **kwargs):
@@ -22,10 +24,14 @@ def action(func):
 
 def data(item_names: List[str], is_list=False):
     def decorator(func):
-        def parse(*args, **kwargs) -> dict | List[dict]:
+        def parse(*args, **kwargs) -> Optional[dict | List[dict]]:
             result = func(*args, **kwargs)
             if not is_list:
+                if result is None:
+                    return None
                 return dict(zip(item_names, result))
+            if result is None:
+                return []
             parsed_items = []
             for item in result:
                 parsed_items.append(dict(zip(item_names, item)))
@@ -72,22 +78,28 @@ def take_user_money(id, amount):
 
 @action
 def add_user_item(id, name):
-    sql(f"INSERT INTO items (user_id, name) VALUES ({id}, {name})")
+    sql(f"INSERT INTO items (user_id, name) VALUES ({id}, '{name}')")
 
 
 def _get_table_items(table_name, page_size, page, filter: Optional[dict] = None):
-    query = "SELECT * FROM items"
+    query = f"SELECT * FROM {table_name}"
     if filter is not None and len(filter) > 0:
         query += " WHERE "
         for key, value in filter.items():
-            query += f"{key} = {value}"
-    query += f" ORDER BY id LIMIT {page_size * page - 1}, {page_size * page}"
+            query += f"{key} = {value} AND "
+        query = query[:-5]
+    query += f" LIMIT {page_size * (page - 1)}, {page_size * page}"
     return sql(query).fetchall()
 
 
 @data(['id', 'user_id', 'name'], is_list=True)
 def get_items(page_size, page, filter: Optional[dict] = None):
-    _get_table_items('items', page_size, page, filter)
+    return _get_table_items('items', page_size, page, filter)
+
+
+@data(['id', 'user_id', 'name'])
+def get_item(id):
+    return sql(f"SELECT * FROM items WHERE id = {id}").fetchone()
 
 
 @action
@@ -97,19 +109,19 @@ def remove_shop_item(item_id):
 
 @action
 def add_shop_item(item_id, cost):
-    item = get_shop_item(item_id)
+    item = get_item(item_id)
     sql(f"""INSERT INTO shop_items (id, user_id, cost) 
       VALUES ({item['id']}, {item['user_id']}, {cost})""")
 
 
 @data(['item_id', 'user_id', 'cost'], is_list=True)
 def get_shop_items(page_size, page, filter: Optional[dict] = None):
-    _get_table_items('shop_items', page_size, page, filter)
+    return _get_table_items('shop_items', page_size, page, filter)
 
 
 @data(['item_id', 'user_id', 'cost'])
 def get_shop_item(item_id):
-    return sql(f"SELECT * FROM items WHERE id = {item_id}").fetchone()
+    return sql(f"SELECT * FROM shop_items WHERE id = {item_id}").fetchone()
 
 
 @action
@@ -121,7 +133,7 @@ def buy_shop_item(user_id, item_id):
 def get_user_level(id):
     experience = get_user(id)['level']
     level = 0
-    while experience >= 100:
+    while experience >= level_trashhold:
         level += 1
-        experience -= 100*level
+        experience -= level_trashhold*level
     return level

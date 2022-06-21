@@ -2,3 +2,4 @@ config.json
 /env
 *.db
 /.idea
+__pycache__

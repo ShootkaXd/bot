@@ -4,7 +4,7 @@ from discord.ext import commands
 from discord_components import DiscordComponents
 
 from settings import settings
-from database import add_user, add_user_experience, cursor, connection as conn, get_user, get_user_level
+from database import add_user, add_user_experience, add_user_money, cursor, connection as conn, get_user, get_user_level
 
 intents = discord.Intents.default()
 intents.members = True
@@ -43,11 +43,7 @@ def create_bot_clean():
                     add_user(member.id)
         conn.commit()
 
-    @bot.event
-    async def on_message(message: discord.Message):
-        if (message.author.id == bot.user.id):
-            return
-
+    async def check_level_and_reply(message: discord.Message):
         old_level = get_user_level(message.author.id)
 
         add_user_experience(message.author.id, 1)
@@ -55,6 +51,17 @@ def create_bot_clean():
         new_level = get_user_level(message.author.id)
 
         if (new_level > old_level):
+            add_user_money(message.author.id, int(settings['level_reward']))
             await message.reply("Поздравляю с новым уровнем!")
+
+    @bot.event
+    async def on_message(message: discord.Message):
+        if message.author.id == bot.user.id:
+            return
+
+        if len(message.content) > 3:
+            check_level_and_reply
+
+        await bot.process_commands(message)
 
     return bot

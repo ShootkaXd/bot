@@ -4,5 +4,7 @@
   "bot_name": "Bot",
   "id": 0,
   "prefix": "-",
-  "NEWS_API_KEY": "BAD_NEWS_API_KEY"
+  "NEWS_API_KEY": "BAD_NEWS_API_KEY",
+  "messages_per_level": 100,
+  "level_reward": 500
 }

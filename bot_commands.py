@@ -1,3 +1,4 @@
+from datetime import datetime, timedelta
 from dis import disco
 import json
 import requests
@@ -20,7 +21,7 @@ googlenews = GoogleNews(lang='ru')
 def create_bot():
     bot = create_bot_clean()
 
-    @bot.command(aliases=['balance', 'cash'])
+    @bot.command(aliases=['balance', 'cash', 'баланс'])
     async def __balance(ctx, member: discord.Member = None):
         if member is None:
             member = ctx.author
@@ -104,7 +105,7 @@ def create_bot():
         if len(rummage) > 1:
             count = rummage[1]
         item = json.loads(requests.get(
-            f'https://newsapi.org/v2/everything?{"q=" + query if rummage else "domains=news.google.com,lenta.ru,rbc.ru,russian.rt.com"}&language=ru&pageSize={count if int(count) < 15 else 15}&page=1&from=2022-05-18&sortBy=publishedAt&apiKey={settings["NEWS_API_KEY"]}').text)
+            f'https://newsapi.org/v2/everything?{"q=" + query if rummage else "domains=news.google.com,lenta.ru,rbc.ru,russian.rt.com"}&language=ru&pageSize={count if int(count) < 15 else 15}&page=1&from={(datetime.utcnow() - timedelta(days=1)).isoformat("T")}&sortBy=publishedAt&apiKey={settings["NEWS_API_KEY"]}').text)
         item = item['articles']
         news_em = discord.Embed(title=f'Главные события',
                                 color=discord.Color.red())
@@ -116,18 +117,24 @@ def create_bot():
 
         await ctx.send(embed=news_em)
 
-    @bot.command(aliases=['inventory'])
+    @bot.command(aliases=['level', 'lvl', 'уровень'])
+    async def __level(ctx: commands.Context, member: discord.Member = None):
+        user = member if member is not None else ctx.author
+        await ctx.message.reply(f"Уровень пользователя {user} равен {db.get_user_level(user.id)}")
+
+    @bot.command(aliases=['inventory', 'инвентарь'])
     async def __inventory(ctx, page=1):
         items = db.get_items(10, page, {'user_id': ctx.author.id})
         embed = discord.Embed(title="Инвентарь")
+        embed.description = ''
 
         for item in items:
-            embed.add_field(name=f"{item['id']}", value=item['name'])
+            embed.description += f"**{item['id']} - {item['name']}**\n"
 
         await ctx.send(embed=embed)
 
-    @bot.command(aliases=['sale', 'продать'])
-    async def __sale(ctx: commands.Context, id, cost):
+    @bot.command(aliases=['sell', 'продать'])
+    async def __sell(ctx: commands.Context, id, cost):
         item = db.get_items(1, 1, {'user_id': ctx.author.id, 'id': id})[0]
 
         db.add_shop_item(item['id'], cost)
@@ -135,12 +142,14 @@ def create_bot():
         await ctx.message.add_reaction('✅')
 
     @bot.command(aliases=['shop', 'магазин'])
-    async def __shop(ctx: commands.Context, page):
+    async def __shop(ctx: commands.Context, page=1):
         items = db.get_shop_items(50, page)
-        embed = discord.Embed(title="Инвентарь")
+        embed = discord.Embed(title="Магазин")
+        embed.description = ''
 
-        for item in items:
-            embed.add_field(name=f"{item['id']}", value=item['name'])
+        for shop_item in items:
+            item = db.get_item(shop_item['item_id'])
+            embed.description += f"**{item['id']} - {item['name']}**\n"
 
         await ctx.send(embed=embed)
 
@@ -151,9 +160,11 @@ def create_bot():
         if (item is None):
             raise ValueError("No such item in shop")
 
-        db.take_user_money(ctx.author.id, item['cost'])
+        db.take_user_money(ctx.author.id, int(item['cost']))
 
-        db.buy_shop_item(ctx.author.id, item['id'])
+        db.buy_shop_item(ctx.author.id, item['item_id'])
+
+        db.add_user_money(item['user_id'], int(item['cost']))
 
         await ctx.message.add_reaction('✅')
 
@@ -301,5 +312,5 @@ def create_bot():
             cmd_em.add_field(
                 name='ОШИБКА!', value="У вас недостаточно прав!", inline=False)
             await ctx.send(embed=cmd_em)
-    
+
     return bot
