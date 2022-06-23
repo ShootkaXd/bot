@@ -1,7 +1,12 @@
+import sqlite3
+
 from settings import settings
 
-from bot_commands import create_bot
+from database import DataBase
+from bot import Bot
 
 if __name__ == "__main__":
-    bot = create_bot()
+    db = DataBase()
+    bot = Bot(db)
+    
     bot.run(settings['token'])
